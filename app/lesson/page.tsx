@@ -1,4 +1,4 @@
-import { getLesson, getUserProgress } from "@/db/queries";
+import { getLesson, getUserProgress, getUserSubscription } from "@/db/queries";
 import { redirect } from "next/navigation";
 import { Quiz } from "./quiz";
 
@@ -7,9 +7,11 @@ type Props = {};
 const LessonPage = async ({}: Props) => {
   const lessonData = getLesson();
   const userProgressData = getUserProgress();
-  const [userProgress, lesson] = await Promise.all([
+  const userSubscriptionData = getUserSubscription();
+  const [userProgress, lesson, userSubscription] = await Promise.all([
     userProgressData,
     lessonData,
+    userSubscriptionData,
   ]);
   if (!userProgress || !lesson) {
     redirect("/learn");
@@ -25,7 +27,7 @@ const LessonPage = async ({}: Props) => {
       initialLessonChallenges={lesson.challenges}
       initialHearts={userProgress.hearts}
       initialPercentage={initialPercentage}
-      userSubscription={undefined} //TODO: Add user subscription
+      userSubscription={userSubscription} //TODO: Stripe
     />
   );
 };

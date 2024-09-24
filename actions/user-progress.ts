@@ -6,11 +6,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import db from "@/db/drizzle";
-import { getCourseById, getUserProgress } from "@/db/queries";
+import {
+  getCourseById,
+  getUserProgress,
+  getUserSubscription,
+} from "@/db/queries";
 import { challengeProgress, challenges, userProgress } from "@/db/schema";
-
-//TODO: move alongside Item components constant into a common file
-const POINTS_TO_REFILL = 10;
+import { POINTS_TO_REFILL } from "@/constants";
 
 export const upsertUserProgress = async (courseId: number) => {
   const { userId } = await auth();
@@ -24,12 +26,10 @@ export const upsertUserProgress = async (courseId: number) => {
   if (!course) {
     throw new Error("Course not found");
   }
-  //   throw new Error("Test");
 
-  //TODO:
-  //   if (!course.units.length || !course.unit[0].lesson.length) {
-  //     throw new Error("Course is empty");
-  //   }
+  if (!course.units.length || !course.units[0].lessons.length) {
+    throw new Error("Course is empty");
+  }
 
   const existingUserProgress = await getUserProgress();
 
@@ -58,6 +58,8 @@ export const reduceHearts = async (challengeId: number) => {
     throw new Error("Unauthorized");
   }
   const currentUserProgress = await getUserProgress();
+  // TODO:Stripe
+  const userSubscription = await getUserSubscription();
 
   const existingChallengeProgress = await db.query.challengeProgress.findFirst({
     where: and(
@@ -74,7 +76,10 @@ export const reduceHearts = async (challengeId: number) => {
   if (!currentUserProgress) {
     throw new Error("User progress not found");
   }
-  //TODO: Handle subscription
+  //TODO: Handle subscription, Stripe
+  if (userSubscription?.isActive) {
+    return { error: "subscription" };
+  }
 
   const challenge = await db.query.challenges.findFirst({
     where: eq(challenges.id, challengeId),

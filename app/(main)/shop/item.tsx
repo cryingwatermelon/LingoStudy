@@ -1,11 +1,12 @@
 "use client";
-import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import Image from "next/image";
 import { useTransition } from "react";
-import { refillHearts } from "@/actions/user-progress";
-import { toast } from "sonner";
 
-const POINTS_TO_REFILL = 10;
+import { Button } from "@/components/ui/button";
+import { refillHearts } from "@/actions/user-progress";
+import { createStripeUrl } from "@/actions/user-subscription";
+import { POINTS_TO_REFILL } from "@/constants";
 
 type Props = {
   hearts: number;
@@ -25,7 +26,15 @@ export const Item = ({ hearts, points, hasActiveSubscription }: Props) => {
     });
   };
   const onUpgrade = () => {
-    startTransition(() => {});
+    startTransition(() => {
+      createStripeUrl()
+        .then((response) => {
+          if (response.data) {
+            window.location.href = response.data;
+          }
+        })
+        .catch(() => toast.error("Something went wrong"));
+    });
   };
   return (
     <ul className="w-full">
@@ -76,8 +85,9 @@ export const Item = ({ hearts, points, hasActiveSubscription }: Props) => {
           </p>
         </div>
         <Button onClick={onUpgrade} disabled={pending || hasActiveSubscription}>
-          {hasActiveSubscription ? "active" : "upgrade"}
+          {hasActiveSubscription ? "settings" : "upgrade"}
         </Button>
+        <Button disabled>test:Settings</Button>
       </div>
     </ul>
   );

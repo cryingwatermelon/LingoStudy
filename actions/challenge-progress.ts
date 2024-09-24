@@ -2,7 +2,7 @@
 
 import db from "@/db/drizzle";
 import { eq, and } from "drizzle-orm";
-import { getUserProgress } from "@/db/queries";
+import { getUserProgress, getUserSubscription } from "@/db/queries";
 import { auth } from "@clerk/nextjs/server";
 import { challenges, challengeProgress, userProgress } from "@/db/schema";
 import { revalidatePath } from "next/cache";
@@ -14,6 +14,7 @@ export const upsertChallengeProgress = async (challengeId: number) => {
     throw new Error("Unauthorized");
   }
   const currentUserProgress = await getUserProgress();
+  const userSubscription = await getUserSubscription();
   //TODO: Handle subscription query later
 
   if (!currentUserProgress) {
@@ -36,8 +37,12 @@ export const upsertChallengeProgress = async (challengeId: number) => {
   });
   const isPractice = !!existingChallengeProgress;
 
-  //如果用户既没有生命值，也没有在练习 TODO: Not if user has a subscription
-  if (currentUserProgress.hearts === 0 && !isPractice) {
+  //如果用户既没有生命值，也没有在练习,也没有订阅 TODO: Not if user has a subscription
+  if (
+    currentUserProgress.hearts === 0 &&
+    !isPractice &&
+    !userSubscription?.isActive //TODO: Stripe
+  ) {
     return { error: "hearts" };
   }
 

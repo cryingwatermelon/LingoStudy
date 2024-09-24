@@ -33,9 +33,23 @@ export const createStripeUrl = async () => {
       {
         quantity: 1,
         price_data: {
-          currency: "RMB",
+          currency: "USD",
+          product_data: {
+            name: "Lingo Pro",
+            description: "Unlimited Hearts",
+          },
+          unit_amount: 2000, //20刀
+          recurring: {
+            interval: "month",
+          },
         },
       },
     ],
+    metadata: {
+      userId,
+    },
+    success_url: returnUrl,
+    cancel_url: returnUrl,
   });
+  return { data: stripeSession.url };
 };
